@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova.plugin.Assets" version="0.0.1"
+        xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>AssetsHelper</name>
+    <js-module name="AssetsHelper" src="www/AssetsHelper.js">
+        <clobbers target="window.navigator.AssetsHelper"/>
+    </js-module>
+    <platform name="ios">
+        <config-file parent="/*" target="config.xml">
+            <feature name="AssetsHelper">
+                <param name="ios-package" value="AssetsHelper"/>
+            </feature>
+        </config-file>
+        <source-file src="src/ios/MD5Handler.h"/>
+        <source-file src="src/ios/MD5Handler.m"/>
+        <source-file src="src/ios/AssetsHelper.m"/>
+        <framework src="AssetsLibrary.framework"/>
+        <framework src="CoreLocation.framework"/>
+    </platform>
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="AssetsHelper">
+                <param name="android-package" value="cordova.plugin.Assets.AssetsHelper"/>
+            </feature>
+        </config-file>
+        <config-file parent="/*" target="AndroidManifest.xml">
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+        </config-file>
+
+        <source-file src="src/android/AssetsHelper.java" target-dir="src/cordova/plugin/Assets/AssetsHelper"/>
+    </platform>
+</plugin>
