@@ -6,7 +6,7 @@
 
     example
 
-    //iOS获取相册全部资源
+        //iOS获取相册全部资源
         function getAssetsMetaInfo() {
             navigator.AssetsHelper.getAllPhotos(function (res) {
                 $$console.log("Assets  --------", res);
