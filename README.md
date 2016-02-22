@@ -2,7 +2,7 @@
     ios AssetHelper for cordova
 
     使用方法
-    cordova plugin add git@github.com:qjloong/AssetHelper.git
+    cordova plugin add https://github.com/qjloong/AssetHelper.git
 
     example
 
