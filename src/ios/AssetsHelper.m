@@ -41,6 +41,7 @@
 
     ALAssetsGroupEnumerationResultsBlock assetsEnumerationBlock = ^(ALAsset *result, NSUInteger index, BOOL *stop) {
         if (result) {
+            
             [self.assets addObject:result];
             if ([self.assets count] == self.assetsCount)
             {
@@ -71,27 +72,31 @@
         ALAssetsFilter *onlyPhotosFilter = [ALAssetsFilter allPhotos];
         [group setAssetsFilter:onlyPhotosFilter];
         // NSLog(@"AssetsLib::getAllPhotos::listGroupBlock > %@ (%d)   type: %@    url: %@",[group valueForProperty:ALAssetsGroupPropertyName],[group numberOfAssets],[group valueForProperty:ALAssetsGroupPropertyType],[group valueForProperty:ALAssetsGroupPropertyURL]);
-        if ([group numberOfAssets] > 0)
+        if(!group)
         {
-            //NSLog(@"Got asset group \"%@\" with %ld photos",[group valueForProperty:ALAssetsGroupPropertyName],(long)[group numberOfAssets]);
-            [self.groups addObject:group];
-            self.assetsCount += [group numberOfAssets];
-        }
-        else
-        {
-            //NSLog(@"Got all %lu asset groups with total %d assets",(unsigned long)[self.groups count],self.assetsCount);
-            for (group in self.groups)
+            NSLog(@"Got all %lu asset groups with total %d assets",(unsigned long)[self.groups count],self.assetsCount);
+            for (ALAssetsGroup *group in self.groups)
             {   // Enumarate each asset group
                 ALAssetsFilter *onlyPhotosFilter = [ALAssetsFilter allPhotos];
                 [group setAssetsFilter:onlyPhotosFilter];
                 [group enumerateAssetsUsingBlock:assetsEnumerationBlock];
             }
         }
+        else if ([group numberOfAssets] > 0)
+        {
+            //NSLog(@"Got asset group \"%@\" with %ld photos",[group valueForProperty:ALAssetsGroupPropertyName],(long)[group numberOfAssets]);
+            [self.groups addObject:group];
+            self.assetsCount = self.assetsCount + [group numberOfAssets];
+        }
+        
     };
-
-    // enumerate only photos
-    NSUInteger groupTypes = ALAssetsGroupAll; // ALAssetsGroupAlbum | ALAssetsGroupEvent | ALAssetsGroupFaces | ALAssetsGroupSavedPhotos | ALAssetsGroupPhotoStream;
-    [self.assetsLibrary enumerateGroupsWithTypes:groupTypes usingBlock:listGroupBlock failureBlock:failureBlock];
+    
+    [self.commandDelegate runInBackground:^{
+        // enumerate only photos
+        NSUInteger groupTypes = ALAssetsGroupAll; // ALAssetsGroupAlbum | ALAssetsGroupEvent | ALAssetsGroupFaces | ALAssetsGroupSavedPhotos | ALAssetsGroupPhotoStream;
+        [self.assetsLibrary enumerateGroupsWithTypes:groupTypes usingBlock:listGroupBlock failureBlock:failureBlock];
+    }];
+  
 }
 
 - (void)getAllPhotosComplete:(CDVInvokedUrlCommand*)command with:(NSString*)error
@@ -115,14 +120,19 @@
             ALAsset* asset = self.assets[i];
             NSString* url = [[asset valueForProperty:ALAssetPropertyAssetURL] absoluteString];
             NSString* date = [self.dateFormatter stringFromDate:[asset valueForProperty:ALAssetPropertyDate]];
+            ALAssetRepresentation* representation = [asset defaultRepresentation];
             NSDictionary* photo = @{
                                     @"url": url,
-                                    @"date": date
+                                    @"date": date,
+                                    @"filename":[representation filename]
                                    };
-            NSMutableDictionary* photometa = [self getImageMeta:asset];
-            [photometa addEntriesFromDictionary:photo];
+            
+            //NSMutableDictionary* photometa = [self getImageMeta:asset];
+            //[photometa addEntriesFromDictionary:photo];
 
-            [photos setObject:photometa forKey:photo[@"url"]];
+            [photos setObject:photo forKey:photo[@"url"]];
+            date = nil;
+            photo = nil;
         }
         NSArray* photoMsg = [photos allValues];
         NSLog(@"Sending to phonegap application message with %lu photos",(unsigned long)[photoMsg count]);
