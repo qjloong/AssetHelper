@@ -11,11 +11,20 @@ import android.app.Activity;
 import android.database.Cursor;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
+import android.content.Intent;
+import android.net.Uri;
+import java.io.FileNotFoundException;
+import android.util.Log;
+import android.os.Environment;
 
 /**
  * This class echoes a string called from JavaScript.
  */
 public class AssetsHelper extends CordovaPlugin {
+
+
+
+    private JSONObject params;
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -23,6 +32,15 @@ public class AssetsHelper extends CordovaPlugin {
                     this.getAllPhotos(callbackContext);
                     return true;
         }
+
+
+        if (action.equals("savePhoto")) {
+                            JSONObject options = args.getJSONObject(0);
+                            String pathStr = options.optString("path");
+                            String nameStr = options.optString("name");
+                            this.saveImageToGallery(callbackContext,pathStr,nameStr);
+                            return true;
+                }
 
         return false;
     }
@@ -61,5 +79,20 @@ public class AssetsHelper extends CordovaPlugin {
               			arr.put(jsonObject);
               		}
             callbackContext.success(arr);
+    }
+
+    private void saveImageToGallery(CallbackContext callbackContext,String path, String name) {
+            //String path = Environment.getExternalStorageDirectory() + "wocloud/";
+
+        // 把文件插入到系统图库
+        try {
+            MediaStore.Images.Media.insertImage(cordova.getActivity().getContentResolver(),
+    				path + name , name, null);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        // 最后通知图库更新
+        cordova.getActivity().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse(path)));
+        callbackContext.success(path + name);
     }
 }
